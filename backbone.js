@@ -31,8 +31,11 @@
   var _ = root._;
   if (!_ && (typeof require !== 'undefined')) _ = require('underscore')._;
 
+  // Save the previous $ variable if there is one
+  var _$ = root.$;
+
   // For Backbone's purposes, jQuery or Zepto owns the `$` variable.
-  var $ = root.jQuery || root.Zepto;
+  //var $ = root.jQuery || root.Zepto;
 
   // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
   // to its previous owner. Returns a reference to this Backbone object.
@@ -752,6 +755,7 @@
 
     // Start the hash change handling, returning `true` if the current URL matches
     // an existing route, and `false` otherwise.
+    // TODO: Bind this with Prototype
     start : function() {
       if (historyStarted) throw new Error("Backbone.history has already been started");
       var docMode = document.documentMode;
@@ -759,11 +763,15 @@
       if (oldIE) {
         this.iframe = $('<iframe src="javascript:0" tabindex="-1" />').hide().appendTo('body')[0].contentWindow;
       }
+      /*
       if ('onhashchange' in window && !oldIE) {
         $(window).bind('hashchange', this.checkUrl);
       } else {
+      */
         setInterval(this.checkUrl, this.interval);
+      /*
       }
+      */
       historyStarted = true;
       return this.loadUrl();
     },
@@ -835,7 +843,7 @@
   // This should be prefered to global lookups, if you're dealing with
   // a specific view.
   var selectorDelegate = function(selector) {
-    return $(selector, this.el);
+    return _$(this.el).select(selector);
   };
 
   // Cached regex to split keys for `delegate`.
@@ -876,10 +884,11 @@
     //
     //     var el = this.make('li', {'class': 'row'}, this.model.escape('title'));
     //
+    // TODO: Migrate to Prototype
     make : function(tagName, attributes, content) {
       var el = document.createElement(tagName);
-      if (attributes) $(el).attr(attributes);
-      if (content) $(el).html(content);
+      if (attributes) $(el).writeAttribute(attributes);
+      if (content) $(el).update(content);
       return el;
     },
 
@@ -899,17 +908,18 @@
     // not `change`, `submit`, and `reset` in Internet Explorer.
     delegateEvents : function(events) {
       if (!(events || (events = this.events))) return;
-      $(this.el).unbind('.delegateEvents' + this.cid);
+      //jQuery(this.el).unbind('.delegateEvents' + this.cid);
       for (var key in events) {
         var methodName = events[key];
         var match = key.match(eventSplitter);
         var eventName = match[1], selector = match[2];
         var method = _.bind(this[methodName], this);
+          console.log([key, selector, eventName, method]);
         eventName += '.delegateEvents' + this.cid;
         if (selector === '') {
-          $(this.el).bind(eventName, method);
+          jQuery(this.el).bind(eventName, method);
         } else {
-          $(this.el).delegate(selector, eventName, method);
+          jQuery(this.el).delegate(selector, eventName, method);
         }
       }
     },
@@ -937,7 +947,7 @@
         if (this.className) attrs['class'] = this.className;
         this.el = this.make(this.tagName, attrs);
       } else if (_.isString(this.el)) {
-        this.el = $(this.el).get(0);
+        this.el = $$(this.el)[0];
       }
     }
 
@@ -1021,6 +1031,7 @@
     }
 
     // Make the request.
+    // TODO: Use Prototype's AJAX
     return $.ajax(params);
   };
 

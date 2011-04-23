@@ -7,6 +7,8 @@ jQuery(document).ready(function() {
     className : 'test-view'
   });
 
+  v = view;
+
   test("View: constructor", function() {
     equals(view.el.id, 'test-view');
     equals(view.el.className, 'test-view');
@@ -14,10 +16,10 @@ jQuery(document).ready(function() {
     equals(view.options.className, 'test-view');
   });
 
-  test("View: jQuery", function() {
+  test("View: Selectors", function() {
     view.el = document.body;
-    equals(view.$('#qunit-header a').get(0).innerHTML, ' Backbone Test Suite');
-    equals(view.$('#qunit-header a').get(1).innerHTML, 'Backbone Speed Suite');
+    equals(view.$('#qunit-header a')[0].innerHTML, ' Backbone Test Suite');
+    equals(view.$('#qunit-header a')[1].innerHTML, 'Backbone Speed Suite');
   });
 
   test("View: make", function() {
