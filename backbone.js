@@ -908,18 +908,29 @@
     // not `change`, `submit`, and `reset` in Internet Explorer.
     delegateEvents : function(events) {
       if (!(events || (events = this.events))) return;
-      //jQuery(this.el).unbind('.delegateEvents' + this.cid);
+      // TODO: See comment below to see how this should work
+      // jQuery(this.el).unbind('.delegateEvents' + this.cid);
+      $(this.el).stopObserving();
       for (var key in events) {
         var methodName = events[key];
         var match = key.match(eventSplitter);
         var eventName = match[1], selector = match[2];
         var method = _.bind(this[methodName], this);
-          console.log([key, selector, eventName, method]);
-        eventName += '.delegateEvents' + this.cid;
+        // TODO: Add a special class to the event
+        // Why? Because before, with jQuery, it had this code:
+        //   eventName += '.delegateEvents' + this.cid;
+        // This scoped events to this.cid, and made them unique.
+        // Not having it can provoke problems like not delegation
+        // not working properly with multiple views for the same element
+        // An example of this would be a view that has view.el = $(document.body).
+        // When it runs view.delegateEvents, it would cause all other
+        // elements to break their bindings
         if (selector === '') {
-          jQuery(this.el).bind(eventName, method);
+          //jQuery(this.el).bind(eventName, method);
+          $(this.el).on(eventName, method);
         } else {
-          jQuery(this.el).delegate(selector, eventName, method);
+          //jQuery(this.el).delegate(selector, eventName, method);
+          $(this.el).on(eventName, selector, method);
         }
       }
     },
