@@ -5665,6 +5665,7 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     if (!eventName) {
       registry.each( function(pair) {
         var eventName = pair.key;
+        console.log(element, eventName);
         stopObserving(element, eventName);
       });
       return element;

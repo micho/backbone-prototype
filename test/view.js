@@ -1,3 +1,20 @@
+// Adding a helper to trigger events from Prototype
+
+Element.prototype.triggerEvent = function(eventName)
+{
+  if (document.createEvent)
+  {
+    var evt = document.createEvent('HTMLEvents');
+    evt.initEvent(eventName, true, true);
+
+    return this.dispatchEvent(evt);
+  }
+
+  if (this.fireEvent) {
+    return this.fireEvent('on' + eventName);
+  }
+};
+
 jQuery(document).ready(function() {
 
   module("Backbone.View");
@@ -41,19 +58,19 @@ jQuery(document).ready(function() {
 
   test("View: delegateEvents", function() {
     var counter = counter2 = 0;
-    view.el = document.body;
+    view.el = $('qunit-banner');
     view.increment = function(){ counter++; };
     jQuery(view.el).bind('click', function(){ counter2++; });
     var events = {"click #qunit-banner": "increment"};
     view.delegateEvents(events);
-    jQuery('#qunit-banner').trigger('click');
+    $('qunit-banner').triggerEvent('click');
     equals(counter, 1);
     equals(counter2, 1);
-    jQuery('#qunit-banner').trigger('click');
+    $('qunit-banner').triggerEvent('click');
     equals(counter, 2);
     equals(counter2, 2);
     view.delegateEvents(events);
-    jQuery('#qunit-banner').trigger('click');
+    $('qunit-banner').triggerEvent('click');
     equals(counter, 3);
     equals(counter2, 3);
   });
@@ -94,7 +111,7 @@ jQuery(document).ready(function() {
 
   test("View: multiple views per element", function() {
     var count = 0, ViewClass = Backbone.View.extend({
-      el: jQuery("body"),
+      el: document.body,
       events: {
         "click": "click"
       },
@@ -104,15 +121,15 @@ jQuery(document).ready(function() {
     });
 
     var view1 = new ViewClass;
-    jQuery("body").trigger("click");
+    $(document.body).triggerEvent("click");
     equals(1, count);
 
     var view2 = new ViewClass;
-    jQuery("body").trigger("click");
+    $(document.body).triggerEvent("click");
     equals(3, count);
 
     view1.delegateEvents();
-    jQuery("body").trigger("click");
+    $(document.body).triggerEvent("click");
     equals(5, count);
   });
 });

@@ -875,7 +875,7 @@
     // Remove this view from the DOM. Note that the view isn't present in the
     // DOM by default, so calling this method may be a no-op.
     remove : function() {
-      $(this.el).remove();
+      this.el && $(this.el).remove();
       return this;
     },
 
@@ -908,30 +908,21 @@
     // not `change`, `submit`, and `reset` in Internet Explorer.
     delegateEvents : function(events) {
       if (!(events || (events = this.events))) return;
-      // TODO: See comment below to see how this should work
-      // jQuery(this.el).unbind('.delegateEvents' + this.cid);
-      $(this.el).stopObserving();
+      this._registeredEvents = this._registeredEvents || [];
+      _(this._registeredEvents).each(function(e) {
+        e.stop();
+      });
       for (var key in events) {
         var methodName = events[key];
         var match = key.match(eventSplitter);
         var eventName = match[1], selector = match[2];
         var method = _.bind(this[methodName], this);
-        // TODO: Add a special class to the event
-        // Why? Because before, with jQuery, it had this code:
-        //   eventName += '.delegateEvents' + this.cid;
-        // This scoped events to this.cid, and made them unique.
-        // Not having it can provoke problems like not delegation
-        // not working properly with multiple views for the same element
-        // An example of this would be a view that has view.el = $(document.body).
-        // When it runs view.delegateEvents, it would cause all other
-        // elements to break their bindings
         if (selector === '') {
-          //jQuery(this.el).bind(eventName, method);
-          $(this.el).on(eventName, method);
+          var evt = $(this.el).on(eventName, method);
         } else {
-          //jQuery(this.el).delegate(selector, eventName, method);
-          $(this.el).on(eventName, selector, method);
+          var evt = $(this.el).on(eventName, selector, method);
         }
+        this._registeredEvents.push(evt);
       }
     },
 
@@ -1042,8 +1033,8 @@
     }
 
     // Make the request.
-    // TODO: Use Prototype's AJAX
-    return $.ajax(params);
+    // TODO: This still depends on jQuery
+    return jQuery.ajax(params);
   };
 
   // Helpers
