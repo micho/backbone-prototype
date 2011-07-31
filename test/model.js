@@ -96,7 +96,14 @@ jQuery(document).ready(function() {
     a = new Backbone.Model(attrs);
     ok(a.isNew(), "it should be new");
     attrs = { 'foo': 1, 'bar': 2, 'baz': 3, 'id': -5 };
-    ok(a.isNew(), "any defined ID is legal, negative or positive");
+    a = new Backbone.Model(attrs);
+    ok(!a.isNew(), "any defined ID is legal, negative or positive");
+    attrs = { 'foo': 1, 'bar': 2, 'baz': 3, 'id': 0 };
+    a = new Backbone.Model(attrs);
+    ok(!a.isNew(), "any defined ID is legal, including zero");
+    ok( new Backbone.Model({          }).isNew(), "is true when there is no id");
+    ok(!new Backbone.Model({ 'id': 2  }).isNew(), "is false for a positive integer");
+    ok(!new Backbone.Model({ 'id': -5 }).isNew(), "is false for a negative integer");
   });
 
   test("Model: get", function() {
@@ -168,8 +175,10 @@ jQuery(document).ready(function() {
     var model = new MongoModel({id: 'eye-dee', _id: 25, title: 'Model'});
     equals(model.get('id'), 'eye-dee');
     equals(model.id, 25);
+    equals(model.isNew(), false);
     model.unset('_id');
     equals(model.id, undefined);
+    equals(model.isNew(), true);
   });
 
   test("Model: set an empty string", function() {
@@ -276,6 +285,13 @@ jQuery(document).ready(function() {
     ok(_.isEqual(lastRequest[1], doc));
   });
 
+  test("Model: non-persisted destroy", function() {
+    attrs = { 'foo': 1, 'bar': 2, 'baz': 3};
+    a = new Backbone.Model(attrs);
+    a.sync = function() { throw "should not be called"; };
+    ok(a.destroy(), "non-persisted model should not call sync");
+  });
+
   test("Model: validate", function() {
     var lastError;
     var model = new Backbone.Model();
@@ -346,6 +362,17 @@ jQuery(document).ready(function() {
     equals(boundError, undefined);
   });
 
+  test("Model: defaults always extend attrs (#459)", function() {
+    var Defaulted = Backbone.Model.extend({
+      defaults: {one: 1},
+      initialize : function(attrs, opts) {
+        equals(attrs.one, 1);
+      }
+    });
+    var providedattrs = new Defaulted({});
+    var emptyattrs = new Defaulted();
+  });
+
   test("Model: Inherit class properties", function() {
     var Parent = Backbone.Model.extend({
       instancePropSame: function() {},
@@ -368,6 +395,32 @@ jQuery(document).ready(function() {
 
     notEqual(Child.prototype.instancePropDiff, Parent.prototype.instancePropDiff);
     notEqual(Child.prototype.instancePropDiff, undefined);
+  });
+
+  test("Model: Nested change events don't clobber previous attributes", function() {
+    var A = Backbone.Model.extend({
+      initialize: function() {
+        this.bind("change:state", function(a, newState) {
+          equals(a.previous('state'), undefined);
+          equals(newState, 'hello');
+          // Fire a nested change event.
+          this.set({ other: "whatever" });
+        });
+      }
+    });
+
+    var B = Backbone.Model.extend({
+      initialize: function() {
+        this.get("a").bind("change:state", function(a, newState) {
+          equals(a.previous('state'), undefined);
+          equals(newState, 'hello');
+        });
+      }
+    });
+
+    a = new A();
+    b = new B({a: a});
+    a.set({state: 'hello'});
   });
 
 });

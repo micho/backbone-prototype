@@ -35,8 +35,8 @@ jQuery(document).ready(function() {
 
   test("View: Selectors", function() {
     view.el = document.body;
-    equals(view.$('#qunit-header a')[0].innerHTML, ' Backbone Test Suite');
-    equals(view.$('#qunit-header a')[1].innerHTML, 'Backbone Speed Suite');
+    ok(view.$('#qunit-header a')[0].innerHTML.match(/Backbone Test Suite/));
+    ok(view.$('#qunit-header a')[1].innerHTML.match(/Backbone Speed Suite/));
   });
 
   test("View: make", function() {
@@ -132,4 +132,25 @@ jQuery(document).ready(function() {
     $(document.body).triggerEvent("click");
     equals(5, count);
   });
+
+  test("View: custom events, with namespaces", function() {
+    var count = 0;
+    var ViewClass = Backbone.View.extend({
+      el: $('body'),
+      events: {
+        "fake$event.namespaced": "run"
+      },
+      run: function() {
+        count++;
+      }
+    });
+
+    var view = new ViewClass;
+    $('body').trigger('fake$event').trigger('fake$event');
+    equals(count, 2);
+    $('body').unbind('.namespaced');
+    $('body').trigger('fake$event');
+    equals(count, 2);
+  });
+
 });

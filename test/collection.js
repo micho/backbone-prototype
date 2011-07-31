@@ -83,6 +83,28 @@ jQuery(document).ready(function() {
     equals(otherCol.length, 1);
     equals(secondAdded, null);
     ok(opts.amazing);
+
+    var f = new Backbone.Model({id: 20, label : 'f'});
+    var g = new Backbone.Model({id: 21, label : 'g'});
+    var h = new Backbone.Model({id: 22, label : 'h'});
+    var atCol = new Backbone.Collection([f, g, h]);
+    equals(atCol.length, 3);
+    atCol.add(e, {at: 1});
+    equals(atCol.length, 4);
+    equals(atCol.at(1), e);
+    equals(atCol.last(), h);
+  });
+
+  test("Collection: add model to collection twice", function() {
+    try {
+      // no id, same cid
+      var a2 = new Backbone.Model({label: a.label});
+      a2.cid = a.cid;
+      col.add(a2);
+      ok(false, "duplicate; expected add to fail");
+    } catch (e) {
+      equals(e.message, "Can't add the same model to a set twice,3");
+    }
   });
 
   test("Collection: add model to multiple collections", function() {
@@ -131,7 +153,7 @@ jQuery(document).ready(function() {
     emcees.bind('change', function(){ counter++; });
     dj.set({name : 'Kool'});
     equals(counter, 1);
-    emcees.refresh([]);
+    emcees.reset([]);
     equals(dj.collection, undefined);
     dj.set({name : 'Shadow'});
     equals(counter, 1);
@@ -195,9 +217,20 @@ jQuery(document).ready(function() {
     equals(counter, 2);
   });
 
-  test("Colllection: model destroy removes from all collections", function() {
+  test("Collection: model destroy removes from all collections", function() {
     var e = new Backbone.Model({id: 5, title: 'Othello'});
     e.sync = function(method, model, options) { options.success({}); };
+    var colE = new Backbone.Collection([e]);
+    var colF = new Backbone.Collection([e]);
+    e.destroy();
+    ok(colE.length == 0);
+    ok(colF.length == 0);
+    equals(null, e.collection);
+  });
+
+  test("Colllection: non-persisted model destroy removes from all collections", function() {
+    var e = new Backbone.Model({title: 'Othello'});
+    e.sync = function(method, model, options) { throw "should not be called"; };
     var colE = new Backbone.Collection([e]);
     var colF = new Backbone.Collection([e]);
     e.destroy();
@@ -283,20 +316,20 @@ jQuery(document).ready(function() {
          [0, 4]);
   });
 
-  test("Collection: refresh", function() {
-    var refreshed = 0;
+  test("Collection: reset", function() {
+    var resetCount = 0;
     var models = col.models;
-    col.bind('refresh', function() { refreshed += 1; });
-    col.refresh([]);
-    equals(refreshed, 1);
+    col.bind('reset', function() { resetCount += 1; });
+    col.reset([]);
+    equals(resetCount, 1);
     equals(col.length, 0);
     equals(col.last(), null);
-    col.refresh(models);
-    equals(refreshed, 2);
+    col.reset(models);
+    equals(resetCount, 2);
     equals(col.length, 4);
     equals(col.last(), a);
-    col.refresh(_.map(models, function(m){ return m.attributes; }));
-    equals(refreshed, 3);
+    col.reset(_.map(models, function(m){ return m.attributes; }));
+    equals(resetCount, 3);
     equals(col.length, 4);
     ok(col.last() !== a);
     ok(_.isEqual(col.last().attributes, a.attributes));
@@ -304,7 +337,7 @@ jQuery(document).ready(function() {
 
   test("Collection: trigger custom events on models", function() {
     var fired = null;
-    a.bind("custom", function() { fired = true });
+    a.bind("custom", function() { fired = true; });
     a.trigger("custom");
     equals(fired, true);
   });
