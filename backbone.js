@@ -886,7 +886,7 @@
     this._configure(options || {});
     this._ensureElement();
     this.delegateEvents();
-    this.initialize.apply(this, arguments);
+    this.initialize(options);
   };
 
   // Element lookup, scoped to DOM elements within the current view.
@@ -958,6 +958,7 @@
     // not `change`, `submit`, and `reset` in Internet Explorer.
     delegateEvents : function(events) {
       if (!(events || (events = this.events))) return;
+      // We build an array of registered events for Prototypejs
       this._registeredEvents = this._registeredEvents || [];
       _(this._registeredEvents).each(function(e) {
         e.stop();
@@ -967,9 +968,7 @@
         if (!method) throw new Error('Event "' + events[key] + '" does not exist');
         var match = key.match(eventSplitter);
         var eventName = match[1], selector = match[2];
-        var method = _.bind(this[methodName], this); //-
-        method = _.bind(method, this); //+
-        eventName += '.delegateEvents' + this.cid; //+
+        method = _.bind(method, this);
         if (selector === '') {
           var evt = $(this.el).on(eventName, method);
         } else {

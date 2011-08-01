@@ -24,8 +24,7 @@ jQuery(document).ready(function() {
     className : 'test-view'
   });
 
-  v = view;
-
+  // These tests fail if I reload manually test.html
   test("View: constructor", function() {
     equals(view.el.id, 'test-view');
     equals(view.el.className, 'test-view');
@@ -36,7 +35,7 @@ jQuery(document).ready(function() {
   test("View: Selectors", function() {
     view.el = document.body;
     ok(view.$('#qunit-header a')[0].innerHTML.match(/Backbone Test Suite/));
-    ok(view.$('#qunit-header a')[1].innerHTML.match(/Backbone Speed Suite/));
+    ok(view.$('#qunit-header a').last().innerHTML.match(/Backbone Speed Suite/));
   });
 
   test("View: make", function() {
@@ -146,10 +145,10 @@ jQuery(document).ready(function() {
     });
 
     var view = new ViewClass;
-    $('body').trigger('fake$event').trigger('fake$event');
+    jQuery('body').trigger('fake$event').trigger('fake$event');
     equals(count, 2);
-    $('body').unbind('.namespaced');
-    $('body').trigger('fake$event');
+    jQuery('body').unbind('.namespaced');
+    jQuery('body').trigger('fake$event');
     equals(count, 2);
   });
 
